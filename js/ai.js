@@ -26,53 +26,18 @@ class AIEvaluator {
   async evaluate(imageDataUrl, theme, declaration) {
     const base64Image = imageDataUrl.replace(/^data:image\/png;base64,/, '');
 
-    const prompt = `あなたはお絵描きバトルゲームの審査員です。
-プレイヤーが描いた絵を3段階で評価してください。
+    const prompt = `お絵描きバトルゲーム審査。JSONのみ出力。理由は10文字以内で短く。
 
-お題: 「${theme}」
-プレイヤーの宣言: 「${declaration}」
+お題:「${theme}」 宣言:「${declaration}」
 
-## 評価基準
+quality: 絵が宣言と似ているか (S/A/B/C/D)
+match: 宣言がお題に合うか (S/A/B/C/D)
+features: 絵の見た目から hp_ratio,atk_ratio,def_ratio,spd_ratio (合計1.0)
+type: 猛獣系/甲殻系/飛行系/毒系/群体系/植物系/電気系/幻惑系 から1つ
+name: 二つ名(8文字以内)
+comment: 短い総評(20文字以内)
 
-1. クオリティ評価 (quality): 宣言された「${declaration}」に絵がどれくらい似ているか
-   - S: 一目で分かる、特徴がしっかり描かれている
-   - A: よく分かる、主要な特徴がある
-   - B: まあ分かる、それっぽい
-   - C: 苦しい、かなり想像力が必要
-   - D: 全く分からない
-
-2. マッチ度評価 (match): 「${declaration}」がお題「${theme}」にどれくらい合っているか
-   - S: ド直球、お題の代表的な存在
-   - A: よく合っている
-   - B: ギリギリ関連がある
-   - C: 関連が薄い
-   - D: 完全に無関係
-
-3. 特徴評価 (features): 絵の視覚的特徴を0.0〜1.0で評価
-   - hp_ratio: 大きさ・ボリューム感・存在感
-   - atk_ratio: トゲ・牙・爪・鋭利な部位・攻撃的な特徴
-   - def_ratio: 殻・鎧・厚い皮膚・盾のような防御的特徴
-   - spd_ratio: 流線型・細身・ヒレ・翼・軽そうな体型
-   ※ 4つの合計が1.0になるように正規化すること
-
-4. タイプ判定 (type): 以下から最も近いものを1つ選択
-   猛獣系, 甲殻系, 飛行系, 毒系, 群体系, 植物系, 電気系, 幻惑系
-
-5. 生物名 (name): この生物に合う二つ名（宣言をベースに特徴を加味、8文字以内）
-
-6. 評価コメント (comment): なぜこの評価になったか1〜2文で説明
-
-以下のJSON形式で回答してください。JSON以外は出力しないでください。
-{
-  "quality": "S",
-  "quality_reason": "理由",
-  "match": "S",
-  "match_reason": "理由",
-  "features": { "hp_ratio": 0.25, "atk_ratio": 0.25, "def_ratio": 0.25, "spd_ratio": 0.25 },
-  "type": "猛獣系",
-  "name": "名前",
-  "comment": "コメント"
-}`;
+{"quality":"B","quality_reason":"短い理由","match":"B","match_reason":"短い理由","features":{"hp_ratio":0.25,"atk_ratio":0.25,"def_ratio":0.25,"spd_ratio":0.25},"type":"猛獣系","name":"名前","comment":"短い総評"}`;
 
     const requestBody = {
       contents: [{
@@ -87,8 +52,9 @@ class AIEvaluator {
         ]
       }],
       generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1024,
+        temperature: 0.5,
+        maxOutputTokens: 512,
+        responseMimeType: 'application/json',
       }
     };
 
