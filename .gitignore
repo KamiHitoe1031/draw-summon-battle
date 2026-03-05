@@ -1,5 +1,6 @@
 .env
-.env.*
+.env.local
+.env.production
 *.pem
 *.key
 credentials.json
@@ -7,3 +8,4 @@ serviceAccountKey.json
 node_modules/
 .DS_Store
 Thumbs.db
+data/

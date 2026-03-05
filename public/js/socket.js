@@ -1,0 +1,62 @@
+// Socket.IO通信レイヤー
+class SocketClient {
+  constructor() {
+    this.socket = io();
+    this.connected = false;
+
+    this.socket.on('connect', () => {
+      this.connected = true;
+      console.log('[Socket] 接続完了');
+    });
+
+    this.socket.on('disconnect', () => {
+      this.connected = false;
+      console.log('[Socket] 切断');
+    });
+  }
+
+  // イベントリスナー登録
+  on(event, callback) {
+    this.socket.on(event, callback);
+  }
+
+  // ルーム作成
+  createRoom(playerName) {
+    this.socket.emit('create-room', { playerName });
+  }
+
+  // ルーム参加
+  joinRoom(code, playerName) {
+    this.socket.emit('join-room', { code, playerName });
+  }
+
+  // ゲーム開始（ホストのみ）
+  startGame() {
+    this.socket.emit('start-game');
+  }
+
+  // 絵の提出
+  submitDrawing(imageData, declaration, remainingTime) {
+    this.socket.emit('submit-drawing', { imageData, declaration, remainingTime });
+  }
+
+  // バトル開始（ホストのみ）
+  requestBattle() {
+    this.socket.emit('request-battle');
+  }
+
+  // リマッチ希望
+  requestRematch() {
+    this.socket.emit('request-rematch');
+  }
+
+  // リマッチキャンセル
+  cancelRematch() {
+    this.socket.emit('cancel-rematch');
+  }
+
+  // ルーム離脱
+  leaveRoom() {
+    this.socket.emit('leave-room');
+  }
+}
