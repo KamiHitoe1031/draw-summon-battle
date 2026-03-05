@@ -193,13 +193,40 @@ class Game {
 
   startTimer() {
     if (this.timerInterval) clearInterval(this.timerInterval);
+    this.drawingLocked = false;
     this.timerInterval = setInterval(() => {
       this.timeLeft--;
       this.updateTimerDisplay();
       if (this.timeLeft <= 0) {
-        this.submitDrawing();
+        this.onTimerEnd();
       }
     }, 1000);
+  }
+
+  // タイマー終了 → 描画をロックして宣言入力フェーズへ
+  onTimerEnd() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+    this.drawingLocked = true;
+
+    // キャンバスを操作不能にする
+    const canvasEl = document.getElementById('draw-canvas');
+    canvasEl.style.pointerEvents = 'none';
+    canvasEl.style.opacity = '0.7';
+
+    // 残り時間を記録
+    this.players[this.currentPlayer].remainingTime = 0;
+    this.players[this.currentPlayer].imageData = this.canvas.getImageData();
+
+    // ヘッダーを「宣言フェーズ」に更新
+    document.getElementById('timer').textContent = '—';
+    document.getElementById('timer').classList.remove('danger');
+    document.getElementById('player-indicator').textContent = `プレイヤー${this.currentPlayer}：名前をつけて提出！`;
+
+    // 宣言入力にフォーカス
+    document.getElementById('input-declare').focus();
   }
 
   updateTimerDisplay() {
@@ -212,23 +239,40 @@ class Game {
     }
   }
 
-  // 絵の提出
+  // 絵の提出（宣言必須）
   submitDrawing() {
+    const declaration = document.getElementById('input-declare').value.trim();
+    if (!declaration) {
+      // 宣言が空なら提出させない
+      document.getElementById('input-declare').focus();
+      document.getElementById('input-declare').style.borderColor = '#e74c3c';
+      setTimeout(() => {
+        document.getElementById('input-declare').style.borderColor = '';
+      }, 1000);
+      return;
+    }
+
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
 
-    const declaration = document.getElementById('input-declare').value.trim();
-    if (!declaration) {
-      // 宣言が空の場合、デフォルト値を設定
-      document.getElementById('input-declare').value = 'ナゾの生物';
+    const player = this.players[this.currentPlayer];
+    // タイマー中に提出した場合はここで画像を保存
+    if (!player.imageData) {
+      player.imageData = this.canvas.getImageData();
+    }
+    player.declaration = declaration;
+    // タイマー中に提出した場合の残り時間
+    if (!this.drawingLocked) {
+      player.remainingTime = this.timeLeft;
     }
 
-    const player = this.players[this.currentPlayer];
-    player.imageData = this.canvas.getImageData();
-    player.declaration = document.getElementById('input-declare').value.trim();
-    player.remainingTime = this.timeLeft;
+    // キャンバスのロック解除
+    const canvasEl = document.getElementById('draw-canvas');
+    canvasEl.style.pointerEvents = '';
+    canvasEl.style.opacity = '';
+    this.drawingLocked = false;
 
     if (this.currentPlayer === 1) {
       // プレイヤー2に交代
@@ -275,11 +319,10 @@ class Game {
       this.showRevealScreen();
 
     } catch (error) {
-      statusEl.textContent = `エラー: ${error.message}`;
+      statusEl.innerHTML = `エラー: ${error.message}<br><br>
+        <button class="btn btn-primary" onclick="window.game.startEvaluation()">リトライ</button>
+        <button class="btn btn-secondary" onclick="window.game.showScreen('title')" style="margin-left:8px">タイトルへ</button>`;
       console.error('AI評価エラー:', error);
-
-      // 3秒後にタイトルに戻る
-      setTimeout(() => this.showScreen('title'), 5000);
     }
   }
 

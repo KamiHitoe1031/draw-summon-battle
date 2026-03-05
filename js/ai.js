@@ -106,15 +106,61 @@ class AIEvaluator {
     }
 
     const data = await response.json();
-    const text = data.candidates[0].content.parts[0].text;
 
-    // JSONを抽出（コードブロックで囲まれている場合にも対応）
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('AIの応答からJSONを抽出できませんでした');
+    // レスポンス構造の安全なアクセス
+    const candidates = data.candidates;
+    if (!candidates || candidates.length === 0) {
+      console.error('AI応答:', JSON.stringify(data));
+      throw new Error('AIから応答がありませんでした（candidates空）');
     }
 
-    return JSON.parse(jsonMatch[0]);
+    const parts = candidates[0]?.content?.parts;
+    if (!parts || parts.length === 0) {
+      console.error('AI応答:', JSON.stringify(candidates[0]));
+      throw new Error('AIの応答にテキストが含まれていません');
+    }
+
+    const text = parts[0].text || '';
+    console.log('AI生テキスト:', text);
+
+    // JSONを抽出（コードブロック ```json ... ``` にも対応）
+    let jsonStr = null;
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonStr = codeBlockMatch[1].trim();
+    } else {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[0];
+      }
+    }
+
+    if (!jsonStr) {
+      console.error('JSON抽出失敗。生テキスト:', text);
+      // フォールバック: デフォルト評価を返す
+      return this.getDefaultEvaluation(declaration);
+    }
+
+    try {
+      return JSON.parse(jsonStr);
+    } catch (parseErr) {
+      console.error('JSONパースエラー:', parseErr, 'テキスト:', jsonStr);
+      return this.getDefaultEvaluation(declaration);
+    }
+  }
+
+  // AIがまともなJSONを返せなかった場合のフォールバック
+  getDefaultEvaluation(declaration) {
+    return {
+      quality: 'B',
+      quality_reason: '自動判定',
+      match: 'B',
+      match_reason: '自動判定',
+      features: { hp_ratio: 0.25, atk_ratio: 0.25, def_ratio: 0.25, spd_ratio: 0.25 },
+      type: '猛獣系',
+      name: declaration || 'ナゾの生物',
+      comment: 'AI評価を取得できなかったためデフォルト値を使用'
+    };
   }
 
   // AI評価結果からゲーム用ステータスを計算
