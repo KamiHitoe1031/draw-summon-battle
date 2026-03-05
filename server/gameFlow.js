@@ -39,6 +39,13 @@ class GameFlow {
     socket.on('leave-room', () => this.onLeaveRoom(socket));
     socket.on('get-model', () => this.onGetModel(socket));
     socket.on('set-model', (data) => this.onSetModel(socket, data));
+    socket.on('check-api-key', () => this.onCheckApiKey(socket));
+  }
+
+  // APIキー設定チェック（クライアントからの確認用）
+  onCheckApiKey(socket) {
+    const hasKey = this.ai.hasApiKey();
+    socket.emit('api-key-status', { available: hasKey });
   }
 
   // 切断処理
@@ -101,6 +108,15 @@ class GameFlow {
     if (!room || room.host !== socket.id) return;
     if (room.players.length < 2) return;
     if (room.state !== 'ready') return;
+
+    // ゲーム開始前にAPIキーを確認（絵を描いた後にエラーになるのを防ぐ）
+    if (!this.ai.hasApiKey()) {
+      console.error('[GAME] APIキー未設定のためゲーム開始を拒否');
+      socket.emit('game-start-error', {
+        error: 'GEMINI_API_KEYがサーバーに設定されていません。Railwayの環境変数を確認してください。'
+      });
+      return;
+    }
 
     // お題をランダム選出
     room.theme = this.themes[Math.floor(Math.random() * this.themes.length)];

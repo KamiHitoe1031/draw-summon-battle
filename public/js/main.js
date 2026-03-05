@@ -151,6 +151,10 @@ class Game {
     this.socket.on('model-info', (data) => this.onModelInfo(data));
     this.socket.on('model-updated', (data) => this.onModelUpdated(data));
     this.socket.on('model-error', (data) => this.onModelError(data));
+
+    // APIキー状態・ゲーム開始エラー
+    this.socket.on('api-key-status', (data) => this.onApiKeyStatus(data));
+    this.socket.on('game-start-error', (data) => this.onGameStartError(data));
   }
 
   // --- 画面切り替え ---
@@ -228,16 +232,35 @@ class Game {
     this.showScreen('lobby');
   }
 
+  // --- APIキー状態 ---
+  onApiKeyStatus({ available }) {
+    const warningEl = document.getElementById('api-key-warning');
+    if (!available) {
+      warningEl.style.display = 'block';
+      warningEl.textContent = 'GEMINI_API_KEYがサーバーに設定されていません。Railwayの環境変数を確認してください。ゲームを開始してもAI評価が失敗します。';
+    } else {
+      warningEl.style.display = 'none';
+    }
+  }
+
+  onGameStartError({ error }) {
+    alert(error);
+  }
+
   // --- ルームイベントハンドラ ---
   onRoomCreated({ code }) {
     this.roomCode = code;
     document.getElementById('room-code-value').textContent = code;
+    // 部屋作成時にAPIキーが設定されているか確認
+    this.socket.checkApiKey();
     this.showScreen('waiting');
   }
 
   onJoinSuccess({ code, opponent }) {
     this.roomCode = code;
     this.opponentName = opponent;
+    // 参加時にもAPIキーチェック
+    this.socket.checkApiKey();
     this.showReady(opponent, this.playerName);
   }
 

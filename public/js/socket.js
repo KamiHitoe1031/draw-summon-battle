@@ -74,4 +74,9 @@ class SocketClient {
   setModel(model) {
     this.socket.emit('set-model', { model });
   }
+
+  // APIキー状態チェック
+  checkApiKey() {
+    this.socket.emit('check-api-key');
+  }
 }
