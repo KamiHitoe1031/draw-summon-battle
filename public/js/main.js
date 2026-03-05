@@ -54,6 +54,11 @@ class Game {
     this.setupDrawingTools();
     document.getElementById('btn-submit-draw').addEventListener('click', () => this.submitDrawing());
 
+    // 設定画面
+    document.getElementById('btn-settings').addEventListener('click', () => this.openSettings());
+    document.getElementById('btn-save-settings').addEventListener('click', () => this.saveSettings());
+    document.getElementById('btn-back-lobby').addEventListener('click', () => this.showScreen('lobby'));
+
     // ステータス発表
     document.getElementById('btn-start-battle').addEventListener('click', () => this.socket.requestBattle());
     document.getElementById('btn-re-evaluate').addEventListener('click', () => this.reEvaluate());
@@ -141,6 +146,11 @@ class Game {
     this.socket.on('rematch-requested', (data) => this.onRematchRequested(data));
     this.socket.on('rematch-waiting', () => this.onRematchWaiting());
     this.socket.on('rematch-accepted', () => this.onRematchAccepted());
+
+    // 設定
+    this.socket.on('model-info', (data) => this.onModelInfo(data));
+    this.socket.on('model-updated', (data) => this.onModelUpdated(data));
+    this.socket.on('model-error', (data) => this.onModelError(data));
   }
 
   // --- 画面切り替え ---
@@ -179,6 +189,38 @@ class Game {
   leaveRoom() {
     this.socket.leaveRoom();
     this.showScreen('lobby');
+  }
+
+  // --- 設定 ---
+  openSettings() {
+    this.socket.getModel();
+    this.showScreen('settings');
+  }
+
+  saveSettings() {
+    const model = document.getElementById('select-model').value;
+    this.socket.setModel(model);
+  }
+
+  onModelInfo({ model }) {
+    const select = document.getElementById('select-model');
+    if (select.querySelector(`option[value="${model}"]`)) {
+      select.value = model;
+    }
+    document.getElementById('current-model-info').textContent = `現在のモデル: ${model}`;
+  }
+
+  onModelUpdated({ model }) {
+    document.getElementById('current-model-info').textContent = `保存しました: ${model}`;
+    document.getElementById('current-model-info').style.color = '#2ecc71';
+    setTimeout(() => {
+      document.getElementById('current-model-info').style.color = '';
+    }, 2000);
+  }
+
+  onModelError({ error }) {
+    document.getElementById('current-model-info').textContent = error;
+    document.getElementById('current-model-info').style.color = '#e74c3c';
   }
 
   backToLobby() {

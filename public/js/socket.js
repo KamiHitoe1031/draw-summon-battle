@@ -64,4 +64,14 @@ class SocketClient {
   leaveRoom() {
     this.socket.emit('leave-room');
   }
+
+  // モデル情報取得
+  getModel() {
+    this.socket.emit('get-model');
+  }
+
+  // モデル変更
+  setModel(model) {
+    this.socket.emit('set-model', { model });
+  }
 }

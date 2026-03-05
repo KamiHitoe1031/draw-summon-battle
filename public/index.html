@@ -26,6 +26,25 @@
             <button id="btn-join-room" class="btn btn-secondary">参加</button>
           </div>
         </div>
+        <button id="btn-settings" class="btn btn-small" style="margin-top:16px;opacity:0.7">設定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 設定画面 -->
+  <div id="screen-settings" class="screen">
+    <div class="settings-container">
+      <h2>設定</h2>
+      <label class="settings-label">AIモデル選択</label>
+      <select id="select-model" class="input-select">
+        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro（高性能・推奨）</option>
+        <option value="gemini-3-flash-preview">Gemini 3 Flash（高速・軽量）</option>
+      </select>
+      <p class="settings-desc">モデルを変更するとAI評価の精度や速度が変わります</p>
+      <p id="current-model-info" class="settings-model-info"></p>
+      <div class="settings-buttons">
+        <button id="btn-save-settings" class="btn btn-primary">保存</button>
+        <button id="btn-back-lobby" class="btn btn-secondary">戻る</button>
       </div>
     </div>
   </div>

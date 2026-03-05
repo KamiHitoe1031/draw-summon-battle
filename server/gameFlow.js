@@ -37,6 +37,8 @@ class GameFlow {
     socket.on('request-rematch', () => this.onRequestRematch(socket));
     socket.on('cancel-rematch', () => this.onCancelRematch(socket));
     socket.on('leave-room', () => this.onLeaveRoom(socket));
+    socket.on('get-model', () => this.onGetModel(socket));
+    socket.on('set-model', (data) => this.onSetModel(socket, data));
   }
 
   // 切断処理
@@ -399,6 +401,23 @@ class GameFlow {
     this.stopTimer(room.code);
     socket.leave(room.code);
     this.roomManager.handleDisconnect(socket.id, this.io);
+  }
+
+  // 現在のモデルを返す
+  onGetModel(socket) {
+    socket.emit('model-info', { model: this.ai.model });
+  }
+
+  // モデル変更
+  onSetModel(socket, { model }) {
+    const allowed = ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'];
+    if (!allowed.includes(model)) {
+      socket.emit('model-error', { error: '無効なモデルです' });
+      return;
+    }
+    this.ai.model = model;
+    console.log(`[CONFIG] モデル変更: ${model}`);
+    socket.emit('model-updated', { model });
   }
 }
 
