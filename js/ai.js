@@ -2,11 +2,16 @@
 class AIEvaluator {
   constructor() {
     this.apiKey = localStorage.getItem('gemini_api_key') || '';
+    this.model = localStorage.getItem('gemini_model') || 'gemini-2.0-flash';
   }
 
-  setApiKey(key) {
+  setApiKey(key, model) {
     this.apiKey = key;
     localStorage.setItem('gemini_api_key', key);
+    if (model) {
+      this.model = model;
+      localStorage.setItem('gemini_model', model);
+    }
   }
 
   getApiKey() {
@@ -87,7 +92,7 @@ class AIEvaluator {
       }
     };
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -220,16 +225,35 @@ class AIEvaluator {
     };
   }
 
-  // APIキー検証
+  // APIキー検証（モデル一覧取得で確認）
   async testApiKey(key) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: 'こんにちは。「OK」とだけ返してください。' }] }]
-      })
-    });
-    return response.ok;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
+    const response = await fetch(url);
+    if (!response.ok) return { valid: false, error: `HTTP ${response.status}` };
+
+    const data = await response.json();
+    const models = (data.models || []).map(m => m.name);
+
+    // 利用可能なFlashモデルを探す
+    const preferred = [
+      'models/gemini-2.0-flash',
+      'models/gemini-2.0-flash-lite',
+      'models/gemini-1.5-flash',
+    ];
+    let selectedModel = null;
+    for (const name of preferred) {
+      if (models.some(m => m === name || m.startsWith(name))) {
+        selectedModel = name.replace('models/', '');
+        break;
+      }
+    }
+
+    // Flash系が見つからなければ任意のgeminiモデルを使用
+    if (!selectedModel) {
+      const anyGemini = models.find(m => m.includes('gemini'));
+      if (anyGemini) selectedModel = anyGemini.replace('models/', '');
+    }
+
+    return { valid: !!selectedModel, model: selectedModel, error: selectedModel ? null : 'Geminiモデルが見つかりません' };
   }
 }

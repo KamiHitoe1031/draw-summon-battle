@@ -481,15 +481,15 @@ class Game {
     status.className = 'api-status';
 
     try {
-      const valid = await this.ai.testApiKey(key);
-      if (valid) {
-        this.ai.setApiKey(key);
-        status.textContent = '保存しました！';
+      const result = await this.ai.testApiKey(key);
+      if (result.valid) {
+        this.ai.setApiKey(key, result.model);
+        status.textContent = `保存しました！（モデル: ${result.model}）`;
         status.className = 'api-status success';
         input.value = '••••••••••••••••';
         input.dataset.hasKey = 'true';
       } else {
-        status.textContent = '無効なAPIキーです';
+        status.textContent = '無効なAPIキーです: ' + (result.error || '');
         status.className = 'api-status error';
       }
     } catch (e) {
