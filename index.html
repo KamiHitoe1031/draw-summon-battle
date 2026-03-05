@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>描いて召喚バトル</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- タイトル画面 -->
+  <div id="screen-title" class="screen active">
+    <div class="title-container">
+      <h1 class="game-title">描いて召喚バトル</h1>
+      <p class="title-subtitle">描いた絵が モンスターになる</p>
+      <button id="btn-start" class="btn btn-primary btn-large">ゲーム開始</button>
+      <button id="btn-settings" class="btn btn-secondary">API設定</button>
+    </div>
+  </div>
+
+  <!-- API設定画面 -->
+  <div id="screen-settings" class="screen">
+    <div class="settings-container">
+      <h2>API設定</h2>
+      <p class="settings-desc">Gemini APIキーを入力してください<br>
+        <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio で無料取得</a>
+      </p>
+      <input type="password" id="input-api-key" class="input-text" placeholder="APIキーを入力...">
+      <div class="settings-buttons">
+        <button id="btn-save-key" class="btn btn-primary">保存</button>
+        <button id="btn-back-title" class="btn btn-secondary">戻る</button>
+      </div>
+      <p id="api-status" class="api-status"></p>
+    </div>
+  </div>
+
+  <!-- お題発表画面 -->
+  <div id="screen-theme" class="screen">
+    <div class="theme-container">
+      <p class="theme-label">お題</p>
+      <h2 id="theme-name" class="theme-name"></h2>
+      <p id="theme-attribute" class="theme-attribute"></p>
+      <p class="theme-instruction">このお題に合った生物を描いてください！</p>
+      <button id="btn-start-draw" class="btn btn-primary btn-large">描く！</button>
+    </div>
+  </div>
+
+  <!-- お絵描き画面 -->
+  <div id="screen-draw" class="screen">
+    <div class="draw-header">
+      <div class="player-indicator" id="player-indicator">プレイヤー1のターン</div>
+      <div class="timer-container">
+        <span class="timer-label">残り</span>
+        <span id="timer" class="timer">40</span>
+        <span class="timer-label">秒</span>
+      </div>
+      <div class="theme-badge" id="theme-badge"></div>
+    </div>
+
+    <div class="draw-main">
+      <div class="canvas-area">
+        <canvas id="draw-canvas" width="500" height="500"></canvas>
+      </div>
+
+      <div class="tools-panel">
+        <div class="tool-section">
+          <label class="tool-label">ツール</label>
+          <div class="tool-buttons">
+            <button class="tool-btn active" data-tool="pen" title="ペン">✏️</button>
+            <button class="tool-btn" data-tool="eraser" title="消しゴム">🧹</button>
+          </div>
+        </div>
+
+        <div class="tool-section">
+          <label class="tool-label">太さ</label>
+          <input type="range" id="brush-size" min="2" max="20" value="5" class="brush-slider">
+          <div id="brush-preview" class="brush-preview"></div>
+        </div>
+
+        <div class="tool-section">
+          <label class="tool-label">色</label>
+          <div class="color-palette" id="color-palette">
+            <button class="color-btn active" data-color="#000000" style="background:#000000"></button>
+            <button class="color-btn" data-color="#ffffff" style="background:#ffffff"></button>
+            <button class="color-btn" data-color="#e74c3c" style="background:#e74c3c"></button>
+            <button class="color-btn" data-color="#3498db" style="background:#3498db"></button>
+            <button class="color-btn" data-color="#2ecc71" style="background:#2ecc71"></button>
+            <button class="color-btn" data-color="#f39c12" style="background:#f39c12"></button>
+            <button class="color-btn" data-color="#9b59b6" style="background:#9b59b6"></button>
+            <button class="color-btn" data-color="#e67e22" style="background:#e67e22"></button>
+            <button class="color-btn" data-color="#795548" style="background:#795548"></button>
+            <button class="color-btn" data-color="#ff69b4" style="background:#ff69b4"></button>
+          </div>
+        </div>
+
+        <div class="tool-actions">
+          <button id="btn-undo" class="btn btn-small">元に戻す</button>
+          <button id="btn-clear" class="btn btn-small btn-danger">全消し</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="declare-section">
+      <label class="declare-label">これは何？（宣言）</label>
+      <div class="declare-input-row">
+        <input type="text" id="input-declare" class="input-text" placeholder="例: ヤドカリ" maxlength="30">
+        <button id="btn-submit-draw" class="btn btn-primary">提出！</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 交代画面 -->
+  <div id="screen-swap" class="screen">
+    <div class="swap-container">
+      <h2>プレイヤー交代！</h2>
+      <p class="swap-message">プレイヤー2に交代してください</p>
+      <p class="swap-warning">相手の絵を見ないでね！</p>
+      <button id="btn-swap-ready" class="btn btn-primary btn-large">準備OK！</button>
+    </div>
+  </div>
+
+  <!-- AI評価中画面 -->
+  <div id="screen-evaluating" class="screen">
+    <div class="eval-container">
+      <h2>AI審査中...</h2>
+      <div class="eval-spinner"></div>
+      <p id="eval-status" class="eval-status">絵を解析しています</p>
+    </div>
+  </div>
+
+  <!-- ステータス発表画面 -->
+  <div id="screen-reveal" class="screen">
+    <div class="reveal-container">
+      <h2 class="reveal-title">召喚結果</h2>
+      <div class="reveal-creatures">
+        <!-- プレイヤー1 -->
+        <div class="creature-card" id="creature-card-1">
+          <div class="creature-player">プレイヤー1</div>
+          <canvas id="reveal-canvas-1" class="creature-canvas" width="200" height="200"></canvas>
+          <div class="creature-name" id="creature-name-1"></div>
+          <div class="creature-type" id="creature-type-1"></div>
+          <div class="eval-grades" id="eval-grades-1"></div>
+          <div class="creature-stats" id="creature-stats-1"></div>
+          <div class="creature-total" id="creature-total-1"></div>
+          <p class="creature-comment" id="creature-comment-1"></p>
+        </div>
+
+        <div class="vs-divider">VS</div>
+
+        <!-- プレイヤー2 -->
+        <div class="creature-card" id="creature-card-2">
+          <div class="creature-player">プレイヤー2</div>
+          <canvas id="reveal-canvas-2" class="creature-canvas" width="200" height="200"></canvas>
+          <div class="creature-name" id="creature-name-2"></div>
+          <div class="creature-type" id="creature-type-2"></div>
+          <div class="eval-grades" id="eval-grades-2"></div>
+          <div class="creature-stats" id="creature-stats-2"></div>
+          <div class="creature-total" id="creature-total-2"></div>
+          <p class="creature-comment" id="creature-comment-2"></p>
+        </div>
+      </div>
+      <button id="btn-start-battle" class="btn btn-primary btn-large">バトル開始！</button>
+    </div>
+  </div>
+
+  <!-- バトル画面 -->
+  <div id="screen-battle" class="screen">
+    <div class="battle-container">
+      <div class="battle-field">
+        <!-- プレイヤー1側 -->
+        <div class="battle-side" id="battle-side-1">
+          <div class="battle-creature-name" id="battle-name-1"></div>
+          <canvas id="battle-canvas-1" class="battle-canvas" width="160" height="160"></canvas>
+          <div class="hp-bar-container">
+            <div class="hp-bar" id="hp-bar-1"></div>
+            <span class="hp-text" id="hp-text-1"></span>
+          </div>
+          <div class="battle-stats-mini" id="battle-stats-1"></div>
+        </div>
+
+        <!-- 中央エフェクト -->
+        <div class="battle-center">
+          <div id="battle-effect" class="battle-effect"></div>
+          <div id="turn-counter" class="turn-counter"></div>
+        </div>
+
+        <!-- プレイヤー2側 -->
+        <div class="battle-side" id="battle-side-2">
+          <div class="battle-creature-name" id="battle-name-2"></div>
+          <canvas id="battle-canvas-2" class="battle-canvas" width="160" height="160"></canvas>
+          <div class="hp-bar-container">
+            <div class="hp-bar" id="hp-bar-2"></div>
+            <span class="hp-text" id="hp-text-2"></span>
+          </div>
+          <div class="battle-stats-mini" id="battle-stats-2"></div>
+        </div>
+      </div>
+
+      <!-- バトルログ -->
+      <div class="battle-log-container">
+        <div id="battle-log" class="battle-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="screen-result" class="screen">
+    <div class="result-container">
+      <h2 id="result-title" class="result-title"></h2>
+      <div class="result-creatures">
+        <div class="result-creature">
+          <canvas id="result-canvas-1" class="result-canvas" width="120" height="120"></canvas>
+          <span id="result-name-1"></span>
+        </div>
+        <div class="result-creature">
+          <canvas id="result-canvas-2" class="result-canvas" width="120" height="120"></canvas>
+          <span id="result-name-2"></span>
+        </div>
+      </div>
+      <div class="result-buttons">
+        <button id="btn-rematch" class="btn btn-primary btn-large">もう1戦！</button>
+        <button id="btn-to-title" class="btn btn-secondary">タイトルへ</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/canvas.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
