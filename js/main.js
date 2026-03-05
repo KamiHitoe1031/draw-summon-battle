@@ -86,6 +86,7 @@ class Game {
     // 結果画面
     document.getElementById('btn-rematch').addEventListener('click', () => this.startGame());
     document.getElementById('btn-to-title').addEventListener('click', () => this.showScreen('title'));
+    document.getElementById('btn-debug-log').addEventListener('click', () => this.toggleDebugLog());
   }
 
   setupDrawingTools() {
@@ -297,23 +298,29 @@ class Game {
     try {
       // プレイヤー1の評価
       statusEl.textContent = 'プレイヤー1の絵を解析中...';
+      console.log('[EVAL] P1開始:', { theme: this.currentTheme.name, declaration: this.players[1].declaration, remainingTime: this.players[1].remainingTime });
       const eval1 = await this.ai.evaluate(
         this.players[1].imageData,
         this.currentTheme.name,
         this.players[1].declaration
       );
+      console.log('[EVAL] P1 AI応答:', JSON.stringify(eval1, null, 2));
       this.players[1].evalResult = eval1;
       this.players[1].stats = this.ai.calculateStats(eval1, this.players[1].remainingTime);
+      console.log('[EVAL] P1 ステータス:', JSON.stringify(this.players[1].stats, null, 2));
 
       // プレイヤー2の評価
       statusEl.textContent = 'プレイヤー2の絵を解析中...';
+      console.log('[EVAL] P2開始:', { theme: this.currentTheme.name, declaration: this.players[2].declaration, remainingTime: this.players[2].remainingTime });
       const eval2 = await this.ai.evaluate(
         this.players[2].imageData,
         this.currentTheme.name,
         this.players[2].declaration
       );
+      console.log('[EVAL] P2 AI応答:', JSON.stringify(eval2, null, 2));
       this.players[2].evalResult = eval2;
       this.players[2].stats = this.ai.calculateStats(eval2, this.players[2].remainingTime);
+      console.log('[EVAL] P2 ステータス:', JSON.stringify(this.players[2].stats, null, 2));
 
       // ステータス発表画面へ
       this.showRevealScreen();
@@ -514,7 +521,48 @@ class Game {
       if (winner === pId) creatureEl.classList.add('winner');
     }
 
+    // デバッグログを準備
+    document.getElementById('debug-log-area').style.display = 'none';
+    this.prepareDebugLog();
+
     setTimeout(() => this.showScreen('result'), 1000);
+  }
+
+  toggleDebugLog() {
+    const area = document.getElementById('debug-log-area');
+    area.style.display = area.style.display === 'none' ? 'block' : 'none';
+  }
+
+  prepareDebugLog() {
+    const lines = [];
+    lines.push('===== AI評価ログ =====');
+    for (const pId of [1, 2]) {
+      const p = this.players[pId];
+      lines.push(`\n--- プレイヤー${pId} ---`);
+      lines.push(`宣言: ${p.declaration}`);
+      lines.push(`残り時間: ${p.remainingTime}秒`);
+      lines.push(`AI生応答: ${JSON.stringify(p.evalResult, null, 2)}`);
+      if (p.stats) {
+        lines.push(`計算結果: HP=${p.stats.hp} ATK=${p.stats.atk} DEF=${p.stats.def} SPD=${p.stats.spd}`);
+        lines.push(`合計=${p.stats.totalPoints}pt (基礎20×${p.stats.qualityMultiplier} +マッチ${p.stats.matchBonus} +時間${p.stats.timeBonus})`);
+        lines.push(`バトルHP=${p.stats.battleHp} タイプ=${p.stats.type} 能力=${p.stats.ability}`);
+      }
+    }
+    lines.push('\n===== バトルログ =====');
+    lines.push(this.battle.getDebugLogText());
+
+    lines.push('\n===== ダメージ計算式 =====');
+    lines.push('base = ATK × 3');
+    lines.push('軽減率 = DEF / (DEF + 15)');
+    lines.push('damage = base × (1 - 軽減率)');
+    lines.push('       = ATK × 3 × 15 / (DEF + 15)');
+    lines.push('最低保証 = 1');
+    lines.push('');
+    lines.push('例: ATK=5 vs DEF=9 → 5×3×15/(9+15) = 225/24 = 9ダメージ');
+    lines.push('例: ATK=3 vs DEF=12 → 3×3×15/(12+15) = 135/27 = 5ダメージ');
+    lines.push('例: ATK=10 vs DEF=5 → 10×3×15/(5+15) = 450/20 = 23ダメージ');
+
+    document.getElementById('debug-log-content').textContent = lines.join('\n');
   }
 
   // APIキー保存

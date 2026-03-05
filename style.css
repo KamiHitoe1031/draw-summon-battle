@@ -887,6 +887,27 @@ body {
   justify-content: center;
 }
 
+/* ===== デバッグログ ===== */
+.debug-log-area {
+  margin-top: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #0a0a15;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: left;
+}
+
+.debug-log-area pre {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #8f8;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}
+
 /* ===== スクロールバー ===== */
 ::-webkit-scrollbar {
   width: 6px;
