@@ -27,6 +27,13 @@
         <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio で無料取得</a>
       </p>
       <input type="password" id="input-api-key" class="input-text" placeholder="APIキーを入力...">
+      <label class="settings-label">モデル選択</label>
+      <select id="select-model" class="input-select">
+        <option value="gemini-3.0-flash" selected>Gemini 3.0 Flash（推奨）</option>
+        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+      </select>
       <div class="settings-buttons">
         <button id="btn-save-key" class="btn btn-primary">保存</button>
         <button id="btn-back-title" class="btn btn-secondary">戻る</button>

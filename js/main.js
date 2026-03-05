@@ -44,6 +44,15 @@ class Game {
       keyInput.value = '••••••••••••••••';
       keyInput.dataset.hasKey = 'true';
     }
+
+    // 保存済みモデルをセレクトに反映
+    const savedModel = localStorage.getItem('gemini_model');
+    if (savedModel) {
+      const selectEl = document.getElementById('select-model');
+      if (selectEl.querySelector(`option[value="${savedModel}"]`)) {
+        selectEl.value = savedModel;
+      }
+    }
   }
 
   setupEventListeners() {
@@ -480,16 +489,18 @@ class Game {
     status.textContent = '検証中...';
     status.className = 'api-status';
 
+    const model = document.getElementById('select-model').value;
+
     try {
-      const result = await this.ai.testApiKey(key);
+      const result = await this.ai.testApiKey(key, model);
       if (result.valid) {
-        this.ai.setApiKey(key, result.model);
-        status.textContent = `保存しました！（モデル: ${result.model}）`;
+        this.ai.setApiKey(key, model);
+        status.textContent = `保存しました！（モデル: ${model}）`;
         status.className = 'api-status success';
         input.value = '••••••••••••••••';
         input.dataset.hasKey = 'true';
       } else {
-        status.textContent = '無効なAPIキーです: ' + (result.error || '');
+        status.textContent = 'エラー: ' + (result.error || '接続できません');
         status.className = 'api-status error';
       }
     } catch (e) {

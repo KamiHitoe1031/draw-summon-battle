@@ -157,7 +157,36 @@ body {
 }
 
 .settings-container .input-text {
+  margin-bottom: 12px;
+}
+
+.settings-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #aaa;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.input-select {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 16px;
+  padding: 12px 16px;
+  border: 2px solid #333;
+  border-radius: 8px;
+  background: #1a1a2e;
+  color: #eee;
+  outline: none;
+  width: 100%;
   margin-bottom: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: auto;
+}
+
+.input-select:focus {
+  border-color: #e94560;
 }
 
 .settings-buttons {

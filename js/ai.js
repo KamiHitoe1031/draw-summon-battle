@@ -2,7 +2,7 @@
 class AIEvaluator {
   constructor() {
     this.apiKey = localStorage.getItem('gemini_api_key') || '';
-    this.model = localStorage.getItem('gemini_model') || 'gemini-2.0-flash';
+    this.model = localStorage.getItem('gemini_model') || 'gemini-3.0-flash';
   }
 
   setApiKey(key, model) {
@@ -225,35 +225,25 @@ class AIEvaluator {
     };
   }
 
-  // APIキー検証（モデル一覧取得で確認）
-  async testApiKey(key) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
-    const response = await fetch(url);
-    if (!response.ok) return { valid: false, error: `HTTP ${response.status}` };
-
-    const data = await response.json();
-    const models = (data.models || []).map(m => m.name);
-
-    // 利用可能なFlashモデルを探す
-    const preferred = [
-      'models/gemini-2.0-flash',
-      'models/gemini-2.0-flash-lite',
-      'models/gemini-1.5-flash',
-    ];
-    let selectedModel = null;
-    for (const name of preferred) {
-      if (models.some(m => m === name || m.startsWith(name))) {
-        selectedModel = name.replace('models/', '');
-        break;
+  // APIキー検証（選択モデルでテストリクエスト）
+  async testApiKey(key, model) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: 'テスト。OKとだけ返して。' }] }]
+        })
+      });
+      if (response.ok) {
+        return { valid: true };
       }
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = errData?.error?.message || `HTTP ${response.status}`;
+      return { valid: false, error: errMsg };
+    } catch (e) {
+      return { valid: false, error: e.message };
     }
-
-    // Flash系が見つからなければ任意のgeminiモデルを使用
-    if (!selectedModel) {
-      const anyGemini = models.find(m => m.includes('gemini'));
-      if (anyGemini) selectedModel = anyGemini.replace('models/', '');
-    }
-
-    return { valid: !!selectedModel, model: selectedModel, error: selectedModel ? null : 'Geminiモデルが見つかりません' };
   }
 }
