@@ -38,5 +38,5 @@ io.on('connection', (socket) => {
 
 server.listen(PORT, () => {
   console.log(`サーバー起動: http://localhost:${PORT}`);
-  console.log(`Gemini モデル: ${process.env.GEMINI_MODEL || 'gemini-2.5-flash'}`);
+  console.log(`Gemini モデル: ${process.env.GEMINI_MODEL || 'gemini-3.1-pro-preview'}`);
 });

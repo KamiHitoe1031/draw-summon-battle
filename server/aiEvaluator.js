@@ -2,7 +2,7 @@
 class AIEvaluator {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || '';
-    this.model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    this.model = process.env.GEMINI_MODEL || 'gemini-3.1-pro-preview';
   }
 
   hasApiKey() {
