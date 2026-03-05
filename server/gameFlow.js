@@ -33,6 +33,7 @@ class GameFlow {
     socket.on('start-game', () => this.onStartGame(socket));
     socket.on('submit-drawing', (data) => this.onSubmitDrawing(socket, data));
     socket.on('request-battle', () => this.onRequestBattle(socket));
+    socket.on('re-evaluate', () => this.onReEvaluate(socket));
     socket.on('request-rematch', () => this.onRequestRematch(socket));
     socket.on('cancel-rematch', () => this.onCancelRematch(socket));
     socket.on('leave-room', () => this.onLeaveRoom(socket));
@@ -223,6 +224,53 @@ class GameFlow {
 
     } catch (error) {
       console.error('[EVAL] エラー:', error);
+      this.io.to(room.code).emit('eval-error', { error: error.message });
+    }
+  }
+
+  // AI再評価（同じ絵で再度評価、テスト用）
+  async onReEvaluate(socket) {
+    const room = this.roomManager.getRoomBySocket(socket.id);
+    if (!room || room.host !== socket.id) return;
+    if (room.state !== 'reveal') return;
+
+    console.log(`[EVAL] 再評価開始: ${room.code}`);
+    room.state = 'evaluating';
+    this.io.to(room.code).emit('eval-start', {
+      champions: this.champions.getAll()
+    });
+
+    try {
+      for (let i = 0; i < 2; i++) {
+        const player = room.players[i];
+        this.io.to(room.code).emit('eval-progress', {
+          message: `${player.name}の絵を再解析中...`
+        });
+
+        const evalResult = await this.ai.evaluate(
+          player.imageData,
+          room.theme.name,
+          player.declaration
+        );
+        player.evalResult = evalResult;
+        player.stats = this.ai.calculateStats(evalResult, player.remainingTime);
+
+        console.log(`[RE-EVAL] P${i + 1}完了: ${JSON.stringify(player.stats)}`);
+      }
+
+      room.state = 'reveal';
+      this.io.to(room.code).emit('eval-complete', {
+        players: room.players.map((p, i) => ({
+          index: i,
+          name: p.name,
+          imageData: p.imageData,
+          declaration: p.declaration,
+          stats: p.stats
+        }))
+      });
+    } catch (error) {
+      console.error('[RE-EVAL] エラー:', error);
+      room.state = 'reveal';
       this.io.to(room.code).emit('eval-error', { error: error.message });
     }
   }

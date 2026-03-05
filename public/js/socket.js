@@ -45,6 +45,11 @@ class SocketClient {
     this.socket.emit('request-battle');
   }
 
+  // AI再評価（ホストのみ）
+  reEvaluate() {
+    this.socket.emit('re-evaluate');
+  }
+
   // リマッチ希望
   requestRematch() {
     this.socket.emit('request-rematch');

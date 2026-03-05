@@ -56,11 +56,15 @@ class Game {
 
     // ステータス発表
     document.getElementById('btn-start-battle').addEventListener('click', () => this.socket.requestBattle());
+    document.getElementById('btn-re-evaluate').addEventListener('click', () => this.reEvaluate());
+    document.getElementById('btn-toggle-reveal-debug').addEventListener('click', () => this.toggleRevealDebug());
+    document.getElementById('btn-copy-reveal-debug').addEventListener('click', () => this.copyRevealDebug());
 
     // 結果
     document.getElementById('btn-rematch').addEventListener('click', () => this.requestRematch());
     document.getElementById('btn-to-lobby').addEventListener('click', () => this.backToLobby());
     document.getElementById('btn-debug-log').addEventListener('click', () => this.toggleDebugLog());
+    document.getElementById('btn-copy-debug').addEventListener('click', () => this.copyDebugLog());
   }
 
   setupDrawingTools() {
@@ -363,6 +367,10 @@ class Game {
   onEvalComplete({ players }) {
     this.players = players;
     this.stopHallOfFameSlide();
+    // 再評価ボタンリセット
+    const reEvalBtn = document.getElementById('btn-re-evaluate');
+    reEvalBtn.disabled = false;
+    reEvalBtn.textContent = 'AI再評価';
     this.showRevealScreen(players);
   }
 
@@ -427,18 +435,68 @@ class Game {
       document.getElementById(`creature-comment-${pId}`).textContent = stats.comment;
     }
 
-    // ホストのみバトル開始ボタン表示
+    // ホストのみバトル開始・再評価ボタン表示
     const battleBtn = document.getElementById('btn-start-battle');
+    const reEvalBtn = document.getElementById('btn-re-evaluate');
     const waitMsg = document.getElementById('reveal-wait-msg');
     if (this.isHost) {
       battleBtn.style.display = '';
+      reEvalBtn.style.display = '';
       waitMsg.style.display = 'none';
     } else {
       battleBtn.style.display = 'none';
+      reEvalBtn.style.display = 'none';
       waitMsg.style.display = '';
     }
 
+    // デバッグログ構築
+    this.buildRevealDebugLog(players);
+    document.getElementById('reveal-debug-area').style.display = 'none';
+
     this.showScreen('reveal');
+  }
+
+  // AI再評価
+  reEvaluate() {
+    document.getElementById('btn-re-evaluate').disabled = true;
+    document.getElementById('btn-re-evaluate').textContent = '再評価中...';
+    this.socket.reEvaluate();
+  }
+
+  // reveal画面のデバッグログ構築
+  buildRevealDebugLog(players) {
+    const lines = [];
+    lines.push('===== AI評価ログ =====');
+    for (let i = 0; i < players.length; i++) {
+      const p = players[i];
+      const s = p.stats;
+      lines.push(`\n--- ${p.name} ---`);
+      lines.push(`宣言: ${p.declaration}`);
+      lines.push(`画質: ${s.quality} (${s.qualityReason})`);
+      lines.push(`適合: ${s.match} (${s.matchReason})`);
+      lines.push(`タイプ: ${s.type} / 能力: ${s.ability}（${s.abilityDesc}）`);
+      lines.push(`HP=${s.hp} ATK=${s.atk} DEF=${s.def} SPD=${s.spd}`);
+      lines.push(`合計=${s.totalPoints}pt (基礎20 ×${s.qualityMultiplier} +マッチ${s.matchBonus} +時間${s.timeBonus})`);
+      lines.push(`バトルHP=${s.battleHp} 二つ名=${s.name}`);
+      lines.push(`コメント: ${s.comment}`);
+    }
+    document.getElementById('reveal-debug-content').textContent = lines.join('\n');
+  }
+
+  // reveal画面デバッグログ表示切替
+  toggleRevealDebug() {
+    const area = document.getElementById('reveal-debug-area');
+    area.style.display = area.style.display === 'none' ? 'block' : 'none';
+  }
+
+  // reveal画面デバッグログコピー
+  copyRevealDebug() {
+    const text = document.getElementById('reveal-debug-content').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('btn-copy-reveal-debug');
+      btn.textContent = 'コピー済み！';
+      setTimeout(() => { btn.textContent = 'コピー'; }, 2000);
+    });
   }
 
   // --- バトルハンドラ ---
@@ -703,6 +761,16 @@ class Game {
     lines.push('最低保証 = 1');
 
     document.getElementById('debug-log-content').textContent = lines.join('\n');
+  }
+
+  // 結果画面デバッグログコピー
+  copyDebugLog() {
+    const text = document.getElementById('debug-log-content').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('btn-copy-debug');
+      btn.textContent = 'コピー済み！';
+      setTimeout(() => { btn.textContent = 'コピー'; }, 2000);
+    });
   }
 }
 

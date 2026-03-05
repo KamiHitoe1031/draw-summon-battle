@@ -1062,6 +1062,25 @@ body {
   text-align: left;
 }
 
+.debug-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #aaa;
+  font-weight: 700;
+}
+
+.reveal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
 .debug-log-area pre {
   font-family: 'Courier New', monospace;
   font-size: 11px;

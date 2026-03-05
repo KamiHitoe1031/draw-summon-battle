@@ -201,8 +201,19 @@
           <p class="creature-comment" id="creature-comment-2"></p>
         </div>
       </div>
-      <button id="btn-start-battle" class="btn btn-primary btn-large" style="display:none">バトル開始！</button>
-      <p id="reveal-wait-msg" class="ready-wait-msg" style="display:none">ホストのバトル開始を待っています...</p>
+      <div class="reveal-buttons">
+        <button id="btn-start-battle" class="btn btn-primary btn-large" style="display:none">バトル開始！</button>
+        <button id="btn-re-evaluate" class="btn btn-secondary" style="display:none">AI再評価</button>
+        <p id="reveal-wait-msg" class="ready-wait-msg" style="display:none">ホストのバトル開始を待っています...</p>
+      </div>
+      <div id="reveal-debug-area" class="debug-log-area" style="display:none">
+        <div class="debug-log-header">
+          <span>AI評価ログ</span>
+          <button id="btn-copy-reveal-debug" class="btn btn-small">コピー</button>
+        </div>
+        <pre id="reveal-debug-content"></pre>
+      </div>
+      <button id="btn-toggle-reveal-debug" class="btn btn-small" style="opacity:0.6;margin-top:12px">デバッグログ</button>
     </div>
   </div>
 
@@ -267,6 +278,10 @@
       </div>
       <p id="rematch-status" class="rematch-status" style="display:none"></p>
       <div id="debug-log-area" class="debug-log-area" style="display:none">
+        <div class="debug-log-header">
+          <span>デバッグログ</span>
+          <button id="btn-copy-debug" class="btn btn-small">コピー</button>
+        </div>
         <pre id="debug-log-content"></pre>
       </div>
     </div>
