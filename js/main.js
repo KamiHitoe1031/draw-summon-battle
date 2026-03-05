@@ -8,6 +8,7 @@ class Game {
     // ゲーム状態
     this.currentPlayer = 1;
     this.currentTheme = null;
+    this.playerNames = { 1: 'プレイヤー1', 2: 'プレイヤー2' };
     this.players = {
       1: { imageData: null, declaration: '', remainingTime: 0, evalResult: null, stats: null },
       2: { imageData: null, declaration: '', remainingTime: 0, evalResult: null, stats: null }
@@ -17,6 +18,10 @@ class Game {
     this.timerInterval = null;
     this.timeLeft = 40;
     this.drawTime = 40;
+
+    // 歴代チャンピオン（localStorageから復元）
+    this.hallOfFame = JSON.parse(localStorage.getItem('hall_of_fame') || '[]');
+    this.hofSlideInterval = null;
 
     // お題リスト
     this.themes = [
@@ -145,6 +150,10 @@ class Game {
       return;
     }
 
+    // プレイヤーネーム取得
+    this.playerNames[1] = document.getElementById('input-p1-name').value.trim() || 'プレイヤー1';
+    this.playerNames[2] = document.getElementById('input-p2-name').value.trim() || 'プレイヤー2';
+
     // 状態リセット
     this.currentPlayer = 1;
     this.players = {
@@ -171,7 +180,7 @@ class Game {
     }
 
     // UI更新
-    document.getElementById('player-indicator').textContent = `プレイヤー${this.currentPlayer}のターン`;
+    document.getElementById('player-indicator').textContent = `${this.playerNames[this.currentPlayer]}のターン`;
     document.getElementById('theme-badge').textContent = this.currentTheme.name;
     document.getElementById('input-declare').value = '';
 
@@ -224,7 +233,7 @@ class Game {
     // ヘッダーを「宣言フェーズ」に更新
     document.getElementById('timer').textContent = '—';
     document.getElementById('timer').classList.remove('danger');
-    document.getElementById('player-indicator').textContent = `プレイヤー${this.currentPlayer}：名前をつけて提出！`;
+    document.getElementById('player-indicator').textContent = `${this.playerNames[this.currentPlayer]}：名前をつけて提出！`;
 
     // 宣言入力にフォーカス
     document.getElementById('input-declare').focus();
@@ -278,6 +287,7 @@ class Game {
     if (this.currentPlayer === 1) {
       // プレイヤー2に交代
       this.currentPlayer = 2;
+      document.querySelector('.swap-message').textContent = `${this.playerNames[2]}に交代してください`;
       this.showScreen('swap');
     } else {
       // 両方完了 → AI評価開始
@@ -295,9 +305,12 @@ class Game {
     this.showScreen('evaluating');
     const statusEl = document.getElementById('eval-status');
 
+    // スライドショー開始
+    this.startHallOfFameSlide();
+
     try {
       // プレイヤー1の評価
-      statusEl.textContent = 'プレイヤー1の絵を解析中...';
+      statusEl.textContent = `${this.playerNames[1]}の絵を解析中...`;
       console.log('[EVAL] P1開始:', { theme: this.currentTheme.name, declaration: this.players[1].declaration, remainingTime: this.players[1].remainingTime });
       const eval1 = await this.ai.evaluate(
         this.players[1].imageData,
@@ -310,7 +323,7 @@ class Game {
       console.log('[EVAL] P1 ステータス:', JSON.stringify(this.players[1].stats, null, 2));
 
       // プレイヤー2の評価
-      statusEl.textContent = 'プレイヤー2の絵を解析中...';
+      statusEl.textContent = `${this.playerNames[2]}の絵を解析中...`;
       console.log('[EVAL] P2開始:', { theme: this.currentTheme.name, declaration: this.players[2].declaration, remainingTime: this.players[2].remainingTime });
       const eval2 = await this.ai.evaluate(
         this.players[2].imageData,
@@ -322,7 +335,8 @@ class Game {
       this.players[2].stats = this.ai.calculateStats(eval2, this.players[2].remainingTime);
       console.log('[EVAL] P2 ステータス:', JSON.stringify(this.players[2].stats, null, 2));
 
-      // ステータス発表画面へ
+      // スライドショー停止 → ステータス発表画面へ
+      this.stopHallOfFameSlide();
       this.showRevealScreen();
 
     } catch (error) {
@@ -337,6 +351,9 @@ class Game {
   showRevealScreen() {
     for (const pId of [1, 2]) {
       const stats = this.players[pId].stats;
+
+      // プレイヤーネーム表示
+      document.getElementById(`creature-card-${pId}`).querySelector('.creature-player').textContent = this.playerNames[pId];
 
       // 絵をコピー
       const srcImg = new Image();
@@ -499,7 +516,7 @@ class Game {
       titleEl.textContent = '引き分け！';
       titleEl.className = 'result-title draw';
     } else {
-      titleEl.textContent = `プレイヤー${winner}の勝利！`;
+      titleEl.textContent = `${this.playerNames[winner]}の勝利！`;
       titleEl.className = `result-title p${winner}-win`;
     }
 
@@ -521,11 +538,105 @@ class Game {
       if (winner === pId) creatureEl.classList.add('winner');
     }
 
+    // 勝者を歴代チャンピオンに保存
+    if (winner !== 'draw') {
+      this.saveChampion(winner);
+    }
+
     // デバッグログを準備
     document.getElementById('debug-log-area').style.display = 'none';
     this.prepareDebugLog();
 
     setTimeout(() => this.showScreen('result'), 1000);
+  }
+
+  // 勝者を歴代チャンピオンに保存
+  saveChampion(winnerId) {
+    const stats = this.players[winnerId].stats;
+    const champion = {
+      playerName: this.playerNames[winnerId],
+      creatureName: stats.name,
+      type: stats.type,
+      totalPoints: stats.totalPoints,
+      theme: this.currentTheme.name,
+      imageData: this.players[winnerId].imageData,
+      date: new Date().toLocaleDateString('ja-JP'),
+      hp: stats.hp,
+      atk: stats.atk,
+      def: stats.def,
+      spd: stats.spd
+    };
+    this.hallOfFame.push(champion);
+
+    // 最大50件に制限（画像データが大きいため）
+    if (this.hallOfFame.length > 50) {
+      this.hallOfFame = this.hallOfFame.slice(-50);
+    }
+
+    try {
+      localStorage.setItem('hall_of_fame', JSON.stringify(this.hallOfFame));
+    } catch (e) {
+      // localStorageが容量超過した場合、古いデータを削って再試行
+      console.warn('localStorage容量不足、古いデータを削除:', e);
+      this.hallOfFame = this.hallOfFame.slice(-10);
+      try {
+        localStorage.setItem('hall_of_fame', JSON.stringify(this.hallOfFame));
+      } catch (e2) {
+        console.error('保存失敗:', e2);
+      }
+    }
+  }
+
+  // スライドショー開始
+  startHallOfFameSlide() {
+    const hofEl = document.getElementById('hall-of-fame');
+
+    if (this.hallOfFame.length === 0) {
+      hofEl.style.display = 'none';
+      return;
+    }
+
+    hofEl.style.display = 'block';
+    this.hofIndex = 0;
+    this.showHofSlide();
+
+    this.hofSlideInterval = setInterval(() => {
+      this.hofIndex = (this.hofIndex + 1) % this.hallOfFame.length;
+      this.showHofSlide();
+    }, 3000);
+  }
+
+  // 1枚のスライドを表示
+  showHofSlide() {
+    const champ = this.hallOfFame[this.hofIndex];
+    if (!champ) return;
+
+    const canvas = document.getElementById('hof-canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = champ.imageData;
+
+    document.getElementById('hof-name').textContent = champ.creatureName;
+    document.getElementById('hof-detail').textContent =
+      `${champ.playerName} | ${champ.theme} | ${champ.type} | 合計${champ.totalPoints}pt`;
+
+    // スライドアニメーション再トリガー
+    const slide = document.querySelector('.hof-slide');
+    slide.style.animation = 'none';
+    slide.offsetHeight; // reflow
+    slide.style.animation = '';
+  }
+
+  // スライドショー停止
+  stopHallOfFameSlide() {
+    if (this.hofSlideInterval) {
+      clearInterval(this.hofSlideInterval);
+      this.hofSlideInterval = null;
+    }
   }
 
   toggleDebugLog() {
@@ -538,7 +649,7 @@ class Game {
     lines.push('===== AI評価ログ =====');
     for (const pId of [1, 2]) {
       const p = this.players[pId];
-      lines.push(`\n--- プレイヤー${pId} ---`);
+      lines.push(`\n--- ${this.playerNames[pId]} ---`);
       lines.push(`宣言: ${p.declaration}`);
       lines.push(`残り時間: ${p.remainingTime}秒`);
       lines.push(`AI生応答: ${JSON.stringify(p.evalResult, null, 2)}`);

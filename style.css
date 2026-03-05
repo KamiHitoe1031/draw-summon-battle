@@ -887,6 +887,100 @@ body {
   justify-content: center;
 }
 
+/* ===== 歴代チャンピオンスライドショー ===== */
+.hall-of-fame {
+  margin-top: 32px;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.hof-title {
+  font-size: 14px;
+  color: #f39c12;
+  margin-bottom: 12px;
+  letter-spacing: 2px;
+}
+
+.hof-slide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: slideIn 0.6s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.hof-canvas {
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 16px rgba(243, 156, 18, 0.3);
+}
+
+.hof-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hof-name {
+  font-size: 18px;
+  font-weight: 900;
+  color: #f39c12;
+}
+
+.hof-detail {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ===== プレイヤーネーム入力 ===== */
+.player-name-section {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-name-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #aaa;
+  width: 80px;
+  text-align: right;
+}
+
+.player-name-input {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 16px;
+  padding: 8px 14px;
+  border: 2px solid #333;
+  border-radius: 8px;
+  background: #1a1a2e;
+  color: #eee;
+  outline: none;
+  width: 160px;
+  transition: border-color 0.2s;
+}
+
+.player-name-input:focus {
+  border-color: #e94560;
+}
+
 /* ===== デバッグログ ===== */
 .debug-log-area {
   margin-top: 16px;

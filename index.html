@@ -14,6 +14,16 @@
     <div class="title-container">
       <h1 class="game-title">描いて召喚バトル</h1>
       <p class="title-subtitle">描いた絵が モンスターになる</p>
+      <div class="player-name-section">
+        <div class="player-name-row">
+          <span class="player-name-label">プレイヤー1</span>
+          <input type="text" id="input-p1-name" class="player-name-input" placeholder="名前" maxlength="10" value="プレイヤー1">
+        </div>
+        <div class="player-name-row">
+          <span class="player-name-label">プレイヤー2</span>
+          <input type="text" id="input-p2-name" class="player-name-input" placeholder="名前" maxlength="10" value="プレイヤー2">
+        </div>
+      </div>
       <button id="btn-start" class="btn btn-primary btn-large">ゲーム開始</button>
       <button id="btn-settings" class="btn btn-secondary">API設定</button>
     </div>
@@ -134,6 +144,18 @@
       <h2>AI審査中...</h2>
       <div class="eval-spinner"></div>
       <p id="eval-status" class="eval-status">絵を解析しています</p>
+
+      <!-- 歴代チャンピオンスライドショー -->
+      <div id="hall-of-fame" class="hall-of-fame" style="display:none">
+        <p class="hof-title">- 歴代チャンピオン -</p>
+        <div class="hof-slide">
+          <canvas id="hof-canvas" class="hof-canvas" width="160" height="160"></canvas>
+          <div class="hof-info">
+            <span id="hof-name" class="hof-name"></span>
+            <span id="hof-detail" class="hof-detail"></span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
