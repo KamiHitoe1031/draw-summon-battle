@@ -27,9 +27,24 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // APIキー状態チェック用エンドポイント（値は返さない）
 app.get('/api/health', (req, res) => {
+  // GEMINI関連の環境変数名だけ抽出（値は出さない）
+  const geminiVars = Object.keys(process.env)
+    .filter(k => k.toUpperCase().includes('GEMINI') || k.toUpperCase().includes('API'))
+    .map(k => ({
+      name: k,
+      length: process.env[k] ? process.env[k].length : 0,
+      preview: process.env[k] ? process.env[k].substring(0, 4) + '...' : '(empty)'
+    }));
+
   res.json({
     apiKeySet: !!process.env.GEMINI_API_KEY,
-    model: process.env.GEMINI_MODEL || 'gemini-3.1-pro-preview'
+    apiKeyLength: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0,
+    model: process.env.GEMINI_MODEL || 'gemini-3.1-pro-preview',
+    envVarCount: Object.keys(process.env).length,
+    geminiRelatedVars: geminiVars,
+    nodeEnv: process.env.NODE_ENV || '(not set)',
+    railway: !!process.env.RAILWAY_ENVIRONMENT_NAME,
+    railwayEnv: process.env.RAILWAY_ENVIRONMENT_NAME || '(not set)'
   });
 });
 
