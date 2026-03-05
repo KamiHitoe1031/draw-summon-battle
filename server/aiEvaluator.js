@@ -1,12 +1,15 @@
 // Gemini API連携 + ステータス計算（サーバー版）
 class AIEvaluator {
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY || '';
     this.model = process.env.GEMINI_MODEL || 'gemini-3.1-pro-preview';
   }
 
+  getApiKey() {
+    return process.env.GEMINI_API_KEY || '';
+  }
+
   hasApiKey() {
-    return this.apiKey.length > 0;
+    return this.getApiKey().length > 0;
   }
 
   // Gemini APIで絵を評価
@@ -49,7 +52,8 @@ comment: 短い総評(20文字以内)
       }
     };
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
+    const apiKey = this.getApiKey();
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',

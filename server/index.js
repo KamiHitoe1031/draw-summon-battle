@@ -19,9 +19,11 @@ const PORT = process.env.PORT || 3000;
 const roomManager = new RoomManager();
 const gameFlow = new GameFlow(io, roomManager);
 
-// APIキー未設定チェック
+// APIキー設定チェック
 if (!process.env.GEMINI_API_KEY) {
-  console.warn('警告: GEMINI_API_KEY が設定されていません。.env ファイルを確認してください。');
+  console.warn('警告: GEMINI_API_KEY が設定されていません。');
+} else {
+  console.log(`GEMINI_API_KEY: 設定済み (${process.env.GEMINI_API_KEY.substring(0, 6)}...)`);
 }
 
 // Socket.IO接続処理
