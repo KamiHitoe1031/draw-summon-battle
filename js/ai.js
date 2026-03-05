@@ -2,7 +2,7 @@
 class AIEvaluator {
   constructor() {
     this.apiKey = localStorage.getItem('gemini_api_key') || '';
-    this.model = localStorage.getItem('gemini_model') || 'gemini-3.0-flash';
+    this.model = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
   }
 
   setApiKey(key, model) {
