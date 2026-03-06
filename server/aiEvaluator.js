@@ -62,33 +62,44 @@ comment: 短い総評(20文字以内)
     const apiKey = this.getApiKey();
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${apiKey}`;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
+    console.log(`[AI] リクエスト送信: model=${this.model}, theme=${theme}, declaration=${declaration}`);
+    console.log(`[AI] APIキー先頭: ${apiKey.substring(0, 8)}...`);
+
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+    } catch (fetchErr) {
+      throw new Error(`通信エラー: ${fetchErr.message}`);
+    }
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API Error: ${response.status} - ${error}`);
+      const errorText = await response.text();
+      console.error(`[AI] HTTPエラー: ${response.status}`, errorText);
+      throw new Error(`Gemini API エラー (${response.status}): ${errorText.substring(0, 200)}`);
     }
 
     const data = await response.json();
 
     const candidates = data.candidates;
     if (!candidates || candidates.length === 0) {
-      console.error('AI応答:', JSON.stringify(data));
-      throw new Error('AIから応答がありませんでした（candidates空）');
+      const reason = data.promptFeedback?.blockReason || JSON.stringify(data).substring(0, 200);
+      console.error('[AI] candidates空:', reason);
+      throw new Error(`AI応答なし: ${reason}`);
     }
 
     const parts = candidates[0]?.content?.parts;
     if (!parts || parts.length === 0) {
-      console.error('AI応答:', JSON.stringify(candidates[0]));
-      throw new Error('AIの応答にテキストが含まれていません');
+      const finishReason = candidates[0]?.finishReason || '不明';
+      console.error('[AI] parts空:', finishReason);
+      throw new Error(`AI応答テキストなし (finishReason: ${finishReason})`);
     }
 
     const text = parts[0].text || '';
-    console.log('AI生テキスト:', text);
+    console.log('[AI] 生テキスト:', text);
 
     // JSONを抽出
     let jsonStr = null;
@@ -103,15 +114,13 @@ comment: 短い総評(20文字以内)
     }
 
     if (!jsonStr) {
-      console.error('JSON抽出失敗。生テキスト:', text);
-      return this.getDefaultEvaluation(declaration);
+      throw new Error(`JSON抽出失敗。AI応答: ${text.substring(0, 200)}`);
     }
 
     try {
       return JSON.parse(jsonStr);
     } catch (parseErr) {
-      console.error('JSONパースエラー:', parseErr, 'テキスト:', jsonStr);
-      return this.getDefaultEvaluation(declaration);
+      throw new Error(`JSONパースエラー: ${parseErr.message}。テキスト: ${jsonStr.substring(0, 200)}`);
     }
   }
 
