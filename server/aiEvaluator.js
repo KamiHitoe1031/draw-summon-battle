@@ -2,14 +2,21 @@
 class AIEvaluator {
   constructor() {
     this.model = process.env.GEMINI_MODEL || 'gemini-3.1-pro-preview';
+    // 手動設定されたAPIキー（環境変数が使えない場合のフォールバック）
+    this.manualApiKey = '';
   }
 
   getApiKey() {
-    return process.env.GEMINI_API_KEY || '';
+    return process.env.GEMINI_API_KEY || this.manualApiKey || '';
   }
 
   hasApiKey() {
     return this.getApiKey().length > 0;
+  }
+
+  // 手動でAPIキーを設定（環境変数が注入されない場合の回避策）
+  setApiKey(key) {
+    this.manualApiKey = key || '';
   }
 
   // Gemini APIで絵を評価

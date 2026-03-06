@@ -79,4 +79,9 @@ class SocketClient {
   checkApiKey() {
     this.socket.emit('check-api-key');
   }
+
+  // APIキー手動設定
+  setApiKey(apiKey) {
+    this.socket.emit('set-api-key', { apiKey });
+  }
 }

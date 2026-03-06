@@ -265,6 +265,22 @@ body {
   justify-content: center;
 }
 
+.settings-apikey-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.settings-apikey-row .input-text {
+  flex: 1;
+}
+
+.settings-divider {
+  border: none;
+  border-top: 1px solid #333;
+  margin: 20px 0;
+}
+
 /* ===== 待機画面 ===== */
 .waiting-container {
   text-align: center;

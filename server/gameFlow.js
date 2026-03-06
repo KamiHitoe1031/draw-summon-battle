@@ -40,12 +40,24 @@ class GameFlow {
     socket.on('get-model', () => this.onGetModel(socket));
     socket.on('set-model', (data) => this.onSetModel(socket, data));
     socket.on('check-api-key', () => this.onCheckApiKey(socket));
+    socket.on('set-api-key', (data) => this.onSetApiKey(socket, data));
   }
 
   // APIキー設定チェック（クライアントからの確認用）
   onCheckApiKey(socket) {
     const hasKey = this.ai.hasApiKey();
     socket.emit('api-key-status', { available: hasKey });
+  }
+
+  // APIキー手動設定（環境変数が使えない場合の回避策）
+  onSetApiKey(socket, { apiKey }) {
+    if (!apiKey || apiKey.trim().length === 0) {
+      socket.emit('api-key-result', { success: false, error: 'APIキーが空です' });
+      return;
+    }
+    this.ai.setApiKey(apiKey.trim());
+    console.log(`[CONFIG] APIキー手動設定（先頭6文字: ${apiKey.trim().substring(0, 6)}...）`);
+    socket.emit('api-key-result', { success: true });
   }
 
   // 切断処理

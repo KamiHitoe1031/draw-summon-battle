@@ -57,6 +57,7 @@ class Game {
     // 設定画面
     document.getElementById('btn-settings').addEventListener('click', () => this.openSettings());
     document.getElementById('btn-save-settings').addEventListener('click', () => this.saveSettings());
+    document.getElementById('btn-save-api-key').addEventListener('click', () => this.saveApiKey());
     document.getElementById('btn-back-lobby').addEventListener('click', () => this.showScreen('lobby'));
 
     // ステータス発表
@@ -155,6 +156,7 @@ class Game {
     // APIキー状態・ゲーム開始エラー
     this.socket.on('api-key-status', (data) => this.onApiKeyStatus(data));
     this.socket.on('game-start-error', (data) => this.onGameStartError(data));
+    this.socket.on('api-key-result', (data) => this.onApiKeyResult(data));
   }
 
   // --- 画面切り替え ---
@@ -198,12 +200,34 @@ class Game {
   // --- 設定 ---
   openSettings() {
     this.socket.getModel();
+    this.socket.checkApiKey();
     this.showScreen('settings');
   }
 
   saveSettings() {
     const model = document.getElementById('select-model').value;
     this.socket.setModel(model);
+  }
+
+  saveApiKey() {
+    const key = document.getElementById('input-api-key').value.trim();
+    if (!key) return;
+    this.socket.setApiKey(key);
+  }
+
+  onApiKeyResult({ success, error }) {
+    const statusEl = document.getElementById('api-key-status-text');
+    if (success) {
+      statusEl.textContent = 'APIキーを設定しました';
+      statusEl.style.color = '#2ecc71';
+      document.getElementById('input-api-key').value = '';
+      // 警告バナーも消す
+      const warningEl = document.getElementById('api-key-warning');
+      if (warningEl) warningEl.style.display = 'none';
+    } else {
+      statusEl.textContent = error;
+      statusEl.style.color = '#e74c3c';
+    }
   }
 
   onModelInfo({ model }) {
@@ -234,12 +258,26 @@ class Game {
 
   // --- APIキー状態 ---
   onApiKeyStatus({ available }) {
+    // 待機画面の警告バナー
     const warningEl = document.getElementById('api-key-warning');
-    if (!available) {
-      warningEl.style.display = 'block';
-      warningEl.textContent = 'GEMINI_API_KEYがサーバーに設定されていません。Railwayの環境変数を確認してください。ゲームを開始してもAI評価が失敗します。';
-    } else {
-      warningEl.style.display = 'none';
+    if (warningEl) {
+      if (!available) {
+        warningEl.style.display = 'block';
+        warningEl.textContent = 'APIキー未設定。ロビーの「設定」からAPIキーを入力してください。';
+      } else {
+        warningEl.style.display = 'none';
+      }
+    }
+    // 設定画面のステータス表示
+    const statusEl = document.getElementById('api-key-status-text');
+    if (statusEl) {
+      if (available) {
+        statusEl.textContent = 'APIキー: 設定済み';
+        statusEl.style.color = '#2ecc71';
+      } else {
+        statusEl.textContent = 'APIキー: 未設定';
+        statusEl.style.color = '#e74c3c';
+      }
     }
   }
 

@@ -35,6 +35,17 @@
   <div id="screen-settings" class="screen">
     <div class="settings-container">
       <h2>設定</h2>
+
+      <label class="settings-label">Gemini APIキー</label>
+      <div class="settings-apikey-row">
+        <input type="password" id="input-api-key" class="input-text" placeholder="AIzaSy...">
+        <button id="btn-save-api-key" class="btn btn-primary">設定</button>
+      </div>
+      <p id="api-key-status-text" class="settings-model-info"></p>
+      <p class="settings-desc">環境変数が使えない場合はここからAPIキーを設定できます</p>
+
+      <hr class="settings-divider">
+
       <label class="settings-label">AIモデル選択</label>
       <select id="select-model" class="input-select">
         <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro（高性能・推奨）</option>
