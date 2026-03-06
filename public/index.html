@@ -55,8 +55,17 @@
       <p id="current-model-info" class="settings-model-info"></p>
       <div class="settings-buttons">
         <button id="btn-save-settings" class="btn btn-primary">保存</button>
-        <button id="btn-back-lobby" class="btn btn-secondary">戻る</button>
       </div>
+
+      <hr class="settings-divider">
+
+      <label class="settings-label">API接続テスト</label>
+      <p class="settings-desc">APIキーとモデルが正しく動作するか確認します</p>
+      <button id="btn-test-api" class="btn btn-primary">テスト実行</button>
+      <div id="test-api-result" class="test-api-result" style="display:none"></div>
+
+      <hr class="settings-divider">
+      <button id="btn-back-lobby" class="btn btn-secondary" style="width:100%">ロビーに戻る</button>
     </div>
   </div>
 

@@ -41,6 +41,7 @@ class GameFlow {
     socket.on('set-model', (data) => this.onSetModel(socket, data));
     socket.on('check-api-key', () => this.onCheckApiKey(socket));
     socket.on('set-api-key', (data) => this.onSetApiKey(socket, data));
+    socket.on('test-api', () => this.onTestApi(socket));
   }
 
   // APIキー設定チェック（クライアントからの確認用）
@@ -58,6 +59,64 @@ class GameFlow {
     this.ai.setApiKey(apiKey.trim());
     console.log(`[CONFIG] APIキー手動設定（先頭6文字: ${apiKey.trim().substring(0, 6)}...）`);
     socket.emit('api-key-result', { success: true });
+  }
+
+  // API接続テスト（設定画面から実行）
+  async onTestApi(socket) {
+    // 1. APIキーチェック
+    if (!this.ai.hasApiKey()) {
+      socket.emit('test-api-result', {
+        success: false,
+        error: 'APIキーが設定されていません。上のフォームからAPIキーを入力してください。'
+      });
+      return;
+    }
+
+    // 2. 実際にGemini APIにテストリクエスト
+    try {
+      const apiKey = this.ai.getApiKey();
+      const model = this.ai.model;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: '「OK」とだけ返してください' }] }],
+          generationConfig: { maxOutputTokens: 16 }
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let detail = '';
+        try {
+          const errJson = JSON.parse(errorText);
+          detail = errJson.error?.message || errorText.substring(0, 200);
+        } catch { detail = errorText.substring(0, 200); }
+
+        socket.emit('test-api-result', {
+          success: false,
+          error: `API応答エラー (${response.status}): ${detail}`
+        });
+        return;
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      socket.emit('test-api-result', {
+        success: true,
+        model: model,
+        response: text.substring(0, 50)
+      });
+
+    } catch (err) {
+      socket.emit('test-api-result', {
+        success: false,
+        error: `通信エラー: ${err.message}`
+      });
+    }
   }
 
   // 切断処理

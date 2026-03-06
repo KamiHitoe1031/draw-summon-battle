@@ -281,6 +281,27 @@ body {
   margin: 20px 0;
 }
 
+.test-api-result {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.test-api-result.success {
+  background: #1a3a1a;
+  border: 1px solid #2ecc71;
+  color: #2ecc71;
+}
+
+.test-api-result.error {
+  background: #3a1a1a;
+  border: 1px solid #e74c3c;
+  color: #e74c3c;
+}
+
 /* ===== 待機画面 ===== */
 .waiting-container {
   text-align: center;

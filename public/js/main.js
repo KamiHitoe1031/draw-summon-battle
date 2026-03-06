@@ -58,6 +58,7 @@ class Game {
     document.getElementById('btn-settings').addEventListener('click', () => this.openSettings());
     document.getElementById('btn-save-settings').addEventListener('click', () => this.saveSettings());
     document.getElementById('btn-save-api-key').addEventListener('click', () => this.saveApiKey());
+    document.getElementById('btn-test-api').addEventListener('click', () => this.testApi());
     document.getElementById('btn-back-lobby').addEventListener('click', () => this.showScreen('lobby'));
 
     // ステータス発表
@@ -157,6 +158,7 @@ class Game {
     this.socket.on('api-key-status', (data) => this.onApiKeyStatus(data));
     this.socket.on('game-start-error', (data) => this.onGameStartError(data));
     this.socket.on('api-key-result', (data) => this.onApiKeyResult(data));
+    this.socket.on('test-api-result', (data) => this.onTestApiResult(data));
   }
 
   // --- 画面切り替え ---
@@ -213,6 +215,30 @@ class Game {
     const key = document.getElementById('input-api-key').value.trim();
     if (!key) return;
     this.socket.setApiKey(key);
+  }
+
+  testApi() {
+    const btn = document.getElementById('btn-test-api');
+    btn.disabled = true;
+    btn.textContent = 'テスト中...';
+    const resultEl = document.getElementById('test-api-result');
+    resultEl.style.display = 'none';
+    this.socket.testApi();
+  }
+
+  onTestApiResult({ success, error, model, response }) {
+    const btn = document.getElementById('btn-test-api');
+    btn.disabled = false;
+    btn.textContent = 'テスト実行';
+    const resultEl = document.getElementById('test-api-result');
+    resultEl.style.display = 'block';
+    if (success) {
+      resultEl.className = 'test-api-result success';
+      resultEl.textContent = `OK - モデル: ${model} / AI応答: "${response}"`;
+    } else {
+      resultEl.className = 'test-api-result error';
+      resultEl.textContent = `NG - ${error}`;
+    }
   }
 
   onApiKeyResult({ success, error }) {

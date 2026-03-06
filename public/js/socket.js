@@ -84,4 +84,9 @@ class SocketClient {
   setApiKey(apiKey) {
     this.socket.emit('set-api-key', { apiKey });
   }
+
+  // API接続テスト
+  testApi() {
+    this.socket.emit('test-api');
+  }
 }
