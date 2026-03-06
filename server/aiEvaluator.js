@@ -54,7 +54,7 @@ comment: 短い総評(20文字以内)
       }],
       generationConfig: {
         temperature: 0.5,
-        maxOutputTokens: 512,
+        maxOutputTokens: 2048,
         responseMimeType: 'application/json',
       }
     };
@@ -99,9 +99,18 @@ comment: 短い総評(20文字以内)
     }
 
     const text = parts[0].text || '';
-    console.log('[AI] 生テキスト:', text);
+    const finishReason = candidates[0]?.finishReason || '不明';
+    console.log(`[AI] 生テキスト (finishReason=${finishReason}):`, text);
 
-    // JSONを抽出
+    // responseMimeType: 'application/json' なので text がそのままJSONのはず
+    // まずそのままパースを試みる
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.log('[AI] 直接パース失敗、抽出を試みる');
+    }
+
+    // コードブロックやテキスト内からJSON抽出
     let jsonStr = null;
     const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (codeBlockMatch) {
@@ -113,14 +122,24 @@ comment: 短い総評(20文字以内)
       }
     }
 
+    // 閉じ括弧が足りない場合の修復
+    if (!jsonStr && text.includes('{')) {
+      jsonStr = text.trim();
+      const openBraces = (jsonStr.match(/\{/g) || []).length;
+      const closeBraces = (jsonStr.match(/\}/g) || []).length;
+      for (let i = 0; i < openBraces - closeBraces; i++) {
+        jsonStr += '}';
+      }
+    }
+
     if (!jsonStr) {
-      throw new Error(`JSON抽出失敗。AI応答: ${text.substring(0, 200)}`);
+      throw new Error(`JSON抽出失敗\nfinishReason: ${finishReason}\nAI応答全文:\n${text}`);
     }
 
     try {
       return JSON.parse(jsonStr);
     } catch (parseErr) {
-      throw new Error(`JSONパースエラー: ${parseErr.message}。テキスト: ${jsonStr.substring(0, 200)}`);
+      throw new Error(`JSONパースエラー: ${parseErr.message}\nfinishReason: ${finishReason}\n抽出テキスト:\n${jsonStr}`);
     }
   }
 

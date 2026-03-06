@@ -504,8 +504,43 @@ class Game {
   }
 
   onEvalError({ error }) {
-    document.getElementById('eval-status').innerHTML =
-      `エラー: ${error}<br><br><button class="btn btn-secondary" onclick="window.game.backToLobby()">ロビーへ</button>`;
+    this.stopHallOfFameSlide();
+    const container = document.getElementById('eval-status');
+    container.innerHTML = '';
+
+    const title = document.createElement('p');
+    title.style.cssText = 'color:#e74c3c;font-weight:700;font-size:16px;margin-bottom:12px';
+    title.textContent = 'AI評価エラー';
+    container.appendChild(title);
+
+    const pre = document.createElement('pre');
+    pre.style.cssText = 'background:#1a1a2e;border:1px solid #e74c3c;border-radius:8px;padding:12px;' +
+      'text-align:left;white-space:pre-wrap;word-break:break-all;font-size:12px;color:#ff8888;' +
+      'max-height:300px;overflow-y:auto;margin-bottom:12px';
+    pre.textContent = error;
+    container.appendChild(pre);
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:8px;justify-content:center';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn btn-small';
+    copyBtn.textContent = 'エラーをコピー';
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(error).then(() => {
+        copyBtn.textContent = 'コピー済み！';
+        setTimeout(() => { copyBtn.textContent = 'エラーをコピー'; }, 2000);
+      });
+    };
+    btnRow.appendChild(copyBtn);
+
+    const lobbyBtn = document.createElement('button');
+    lobbyBtn.className = 'btn btn-secondary';
+    lobbyBtn.textContent = 'ロビーへ';
+    lobbyBtn.onclick = () => this.backToLobby();
+    btnRow.appendChild(lobbyBtn);
+
+    container.appendChild(btnRow);
   }
 
   // ステータス発表画面を構築
