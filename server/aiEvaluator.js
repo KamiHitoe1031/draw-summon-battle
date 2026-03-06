@@ -27,18 +27,28 @@ class AIEvaluator {
 
     const base64Image = imageDataUrl.replace(/^data:image\/png;base64,/, '');
 
-    const prompt = `お絵描きバトルゲーム審査。JSONのみ出力。理由は10文字以内で短く。
+    const prompt = `お絵描きバトルゲームの厳正審査。JSONのみ出力。
 
-お題:「${theme}」 宣言:「${declaration}」
+お題:「${theme}」 プレイヤーの宣言:「${declaration}」
 
-quality: 絵が宣言と似ているか (S/A/B/C/D)
-match: 宣言がお題に合うか (S/A/B/C/D)
-features: 絵の見た目から hp_ratio,atk_ratio,def_ratio,spd_ratio (合計1.0)
-type: 猛獣系/甲殻系/飛行系/毒系/群体系/植物系/電気系/幻惑系 から1つ
-name: 二つ名(8文字以内)
-comment: 短い総評(20文字以内)
+以下の4項目を厳しく評価してください。
 
-{"quality":"B","quality_reason":"短い理由","match":"B","match_reason":"短い理由","features":{"hp_ratio":0.25,"atk_ratio":0.25,"def_ratio":0.25,"spd_ratio":0.25},"type":"猛獣系","name":"名前","comment":"短い総評"}`;
+■ quality（画力）: 絵が宣言した生物にどれだけ似ているか
+  S=一目で分かる完成度 A=特徴を捉えている B=なんとなく分かる C=かろうじて D=全く似ていない
+
+■ match（お題適合）: 宣言した生物がお題に合っているか ★厳しく判定★
+  S=お題にぴったり A=十分関連がある B=やや関連がある C=こじつけレベル D=全く関係ない
+  例: お題「海の生物」に「ドラゴン」→D、「カニ」→S、「カモメ」→B
+
+■ creativity（独創性）: 発想が面白いか・意外性があるか
+  S=唸るほど独創的 A=面白い発想 B=普通 C=ありきたり D=工夫なし
+
+■ detail（書き込み）: 絵の丁寧さ・書き込み量
+  S=非常に丁寧 A=よく描かれている B=普通 C=雑 D=ほぼ白紙
+
+理由は各10文字以内。features合計1.0。typeは1つ選択。nameは8文字以内。commentは20文字以内。
+
+{"quality":"B","quality_reason":"理由","match":"B","match_reason":"理由","creativity":"B","creativity_reason":"理由","detail":"B","detail_reason":"理由","features":{"hp_ratio":0.25,"atk_ratio":0.25,"def_ratio":0.25,"spd_ratio":0.25},"type":"猛獣系","name":"二つ名","comment":"総評"}`;
 
     const requestBody = {
       contents: [{
@@ -169,6 +179,14 @@ comment: 短い総評(20文字以内)
       'S': 4, 'A': 2, 'B': 0, 'C': -2, 'D': -4
     };
 
+    const creativityBonus = {
+      'S': 3, 'A': 2, 'B': 0, 'C': -1, 'D': -2
+    };
+
+    const detailBonus = {
+      'S': 3, 'A': 2, 'B': 0, 'C': -1, 'D': -2
+    };
+
     let timeBonus = 0;
     if (remainingTime >= 20) timeBonus = 4;
     else if (remainingTime >= 10) timeBonus = 2;
@@ -176,7 +194,9 @@ comment: 短い総評(20文字以内)
 
     const qMult = qualityMultiplier[evalResult.quality] || 1.0;
     const mBonus = matchBonus[evalResult.match] || 0;
-    const totalPoints = Math.max(6, Math.round(BASE_STATS * qMult + mBonus + timeBonus));
+    const cBonus = creativityBonus[evalResult.creativity] || 0;
+    const dBonus = detailBonus[evalResult.detail] || 0;
+    const totalPoints = Math.max(6, Math.round(BASE_STATS * qMult + mBonus + cBonus + dBonus + timeBonus));
 
     const f = evalResult.features;
     const sum = f.hp_ratio + f.atk_ratio + f.def_ratio + f.spd_ratio;
@@ -245,12 +265,18 @@ comment: 短い総評(20文字以内)
       name: evalResult.name || '???',
       quality: evalResult.quality,
       match: evalResult.match,
+      creativity: evalResult.creativity || 'B',
+      detail: evalResult.detail || 'B',
       qualityReason: evalResult.quality_reason || '',
       matchReason: evalResult.match_reason || '',
+      creativityReason: evalResult.creativity_reason || '',
+      detailReason: evalResult.detail_reason || '',
       comment: evalResult.comment || '',
       timeBonus,
       qualityMultiplier: qMult,
-      matchBonus: mBonus
+      matchBonus: mBonus,
+      creativityBonus: cBonus,
+      detailBonus: dBonus
     };
   }
 }

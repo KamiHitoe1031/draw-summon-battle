@@ -573,6 +573,8 @@ class Game {
       gradesEl.innerHTML = `
         <span class="grade-badge grade-${stats.quality}" title="${stats.qualityReason}">画質 ${stats.quality}</span>
         <span class="grade-badge grade-${stats.match}" title="${stats.matchReason}">適合 ${stats.match}</span>
+        <span class="grade-badge grade-${stats.creativity}" title="${stats.creativityReason}">独創 ${stats.creativity}</span>
+        <span class="grade-badge grade-${stats.detail}" title="${stats.detailReason}">丁寧 ${stats.detail}</span>
         <span class="grade-badge grade-B" title="時間ボーナス +${stats.timeBonus}">時間 +${stats.timeBonus}</span>
       `;
 
@@ -592,8 +594,10 @@ class Game {
       }).join('');
 
       // 合計
+      const cb = stats.creativityBonus || 0;
+      const db = stats.detailBonus || 0;
       document.getElementById(`creature-total-${pId}`).textContent =
-        `合計 ${stats.totalPoints}pt（基礎20 ×${stats.qualityMultiplier} ${stats.matchBonus >= 0 ? '+' : ''}${stats.matchBonus} +時間${stats.timeBonus}）`;
+        `合計 ${stats.totalPoints}pt（20×${stats.qualityMultiplier} 適合${stats.matchBonus >= 0 ? '+' : ''}${stats.matchBonus} 独創${cb >= 0 ? '+' : ''}${cb} 丁寧${db >= 0 ? '+' : ''}${db} 時間+${stats.timeBonus}）`;
 
       // コメント
       document.getElementById(`creature-comment-${pId}`).textContent = stats.comment;
@@ -638,9 +642,13 @@ class Game {
       lines.push(`宣言: ${p.declaration}`);
       lines.push(`画質: ${s.quality} (${s.qualityReason})`);
       lines.push(`適合: ${s.match} (${s.matchReason})`);
+      lines.push(`独創: ${s.creativity || '?'} (${s.creativityReason || ''})`);
+      lines.push(`丁寧: ${s.detail || '?'} (${s.detailReason || ''})`);
       lines.push(`タイプ: ${s.type} / 能力: ${s.ability}（${s.abilityDesc}）`);
       lines.push(`HP=${s.hp} ATK=${s.atk} DEF=${s.def} SPD=${s.spd}`);
-      lines.push(`合計=${s.totalPoints}pt (基礎20 ×${s.qualityMultiplier} +マッチ${s.matchBonus} +時間${s.timeBonus})`);
+      const cb = s.creativityBonus || 0;
+      const db = s.detailBonus || 0;
+      lines.push(`合計=${s.totalPoints}pt (20×${s.qualityMultiplier} 適合${s.matchBonus >= 0 ? '+' : ''}${s.matchBonus} 独創${cb >= 0 ? '+' : ''}${cb} 丁寧${db >= 0 ? '+' : ''}${db} 時間+${s.timeBonus})`);
       lines.push(`バトルHP=${s.battleHp} 二つ名=${s.name}`);
       lines.push(`コメント: ${s.comment}`);
     }
@@ -906,9 +914,13 @@ class Game {
       lines.push(`\n--- ${p.name} ---`);
       lines.push(`宣言: ${p.declaration}`);
       if (p.stats) {
-        lines.push(`計算結果: HP=${p.stats.hp} ATK=${p.stats.atk} DEF=${p.stats.def} SPD=${p.stats.spd}`);
-        lines.push(`合計=${p.stats.totalPoints}pt (基礎20×${p.stats.qualityMultiplier} +マッチ${p.stats.matchBonus} +時間${p.stats.timeBonus})`);
-        lines.push(`バトルHP=${p.stats.battleHp} タイプ=${p.stats.type} 能力=${p.stats.ability}`);
+        const s = p.stats;
+        const cb = s.creativityBonus || 0;
+        const db = s.detailBonus || 0;
+        lines.push(`画質=${s.quality} 適合=${s.match} 独創=${s.creativity || '?'} 丁寧=${s.detail || '?'}`);
+        lines.push(`HP=${s.hp} ATK=${s.atk} DEF=${s.def} SPD=${s.spd}`);
+        lines.push(`合計=${s.totalPoints}pt (20×${s.qualityMultiplier} 適合${s.matchBonus >= 0 ? '+' : ''}${s.matchBonus} 独創${cb >= 0 ? '+' : ''}${cb} 丁寧${db >= 0 ? '+' : ''}${db} 時間+${s.timeBonus})`);
+        lines.push(`バトルHP=${s.battleHp} タイプ=${s.type} 能力=${s.ability}`);
       }
     }
 
